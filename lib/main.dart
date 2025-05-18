@@ -13,10 +13,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => AuthProvider(), // Removed initialize()
+      create: (context) => AuthProvider(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: const CatalogScreen(),
+        home: const CatalogScreen(), // Catalog is the main screen
       ),
     );
   }

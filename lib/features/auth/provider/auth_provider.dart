@@ -1,18 +1,23 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'package:myfrontend/data/model/user.dart';
 
 class AuthProvider with ChangeNotifier {
   String? _token;
   User? _userData;
+  bool _isLoading = false;
 
+  // Getters
   bool get isLoggedIn => _token != null;
   String? get token => _token;
   User? get userData => _userData;
+  bool get isLoading => _isLoading;
 
   Future<void> login(String email, String password) async {
+    _isLoading = true;
+    notifyListeners();
+
     try {
       final response = await http.post(
         Uri.parse('http://10.0.2.2:3000/api/login'),
@@ -20,40 +25,52 @@ class AuthProvider with ChangeNotifier {
         headers: {'Content-Type': 'application/json'},
       );
 
-      print('Raw response: ${response.body}'); // Debug log
-
       final data = jsonDecode(response.body);
 
-      // Add null checks for critical fields
-      if (response.statusCode == 200 && data['success'] == true) {
-        if (data['token'] == null || data['user'] == null) {
-          throw AuthException('Missing token or user data in response');
-        }
-
-        _token = data['token'] as String;
-
-        // Ensure user data is properly typed
-        if (data['user'] is Map<String, dynamic>) {
-          _userData = User.fromJson(data['user'] as Map<String, dynamic>);
-        } else {
-          throw AuthException('Invalid user data format');
-        }
-
+      if (response.statusCode == 200) {
+        _token = data['token'];
+        _userData = User.fromJson(data['user']);
         notifyListeners();
       } else {
         throw AuthException(data['message'] ?? 'Login failed');
       }
-    } on FormatException {
-      throw AuthException('Invalid server response format');
     } catch (e) {
-      throw AuthException('Login failed: ${e.toString()}');
+      _clearAuthState();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
+  Map<String, dynamic> _handleResponse(http.Response response) {
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode != 200 || data['success'] != true) {
+      throw AuthException(data['message'] ?? 'Login failed');
+    }
+
+    if (data['token'] == null || data['user'] == null) {
+      throw AuthException('Missing authentication data');
+    }
+
+    return data;
+  }
+
   Future<void> logout() async {
+    _clearAuthState();
+    // Optional: Call backend logout endpoint if exists
+  }
+
+  void _clearAuthState() {
     _token = null;
     _userData = null;
     notifyListeners();
+  }
+
+  // Add this for token persistence
+  Future<void> init() async {
+    // Load token/user from secure storage if needed
   }
 }
 
@@ -62,5 +79,5 @@ class AuthException implements Exception {
   AuthException(this.message);
 
   @override
-  String toString() => 'AuthException: $message';
+  String toString() => message; // Cleaner error display
 }

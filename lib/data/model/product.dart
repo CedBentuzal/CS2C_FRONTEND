@@ -3,30 +3,39 @@ class Product {
   final String name;
   final double price;
   final String imageUrl;
-  final String description;
+  final String? description;
+  final String userId;
+  final DateTime? createdAt;
 
   Product({
     required this.id,
     required this.name,
     required this.price,
     required this.imageUrl,
-    required this.description,
+    this.description,
+    required this.userId,
+    this.createdAt,
   });
 
-  // Helper for creating copies (useful for mock updates)
-  Product copyWith({
-    String? id,
-    String? name,
-    double? price,
-    String? imageUrl,
-    String? description,
-  }) {
+  factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      price: price ?? this.price,
-      imageUrl: imageUrl ?? this.imageUrl,
-      description: description ?? this.description,
+      id: json['id'],
+      name: json['name'],
+      price: json['price'].toDouble(),
+      imageUrl: json['image_url'],
+      description: json['description'],
+      userId: json['user_id'],
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'price': price,
+    'image_url': imageUrl,
+    'description': description,
+    'user_id': userId,
+  };
 }

@@ -1,54 +1,81 @@
-import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:myfrontend/data/model/product.dart';
+import 'package:myfrontend/features/auth/provider/auth_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 
 class ProductService {
-  // Simulate network delay
-  final Duration _mockDelay = const Duration(milliseconds: 800);
+  static const String _baseUrl = 'http://10.0.2.2:3000/api';
 
-  // Mock data
-  final List<Product> _mockProducts = [
-    Product(
-      id: '1',
-      name: 'Vintage Camera',
-      price: 99.99,
-      imageUrl: 'https://picsum.photos/300?random=1',
-      description: 'Classic film camera from the 1980s',
-    ),
-    Product(
-      id: '2',
-      name: 'Wireless Headphones',
-      price: 59.99,
-      imageUrl: 'https://picsum.photos/300?random=2',
-      description: 'Noise-cancelling Bluetooth headphones',
-    ),
-    Product(
-      id: '3',
-      name: 'Leather Notebook',
-      price: 24.99,
-      imageUrl: 'https://picsum.photos/300?random=3',
-      description: 'Handmade leather-bound journal',
-    ),
-  ];
+  Future<List<Product>> fetchPublicProducts() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/products'),
+        headers: {'Accept': 'application/json'},
+      );
 
-  Future<List<Product>> fetchProducts() async {
-    await Future.delayed(_mockDelay); // Simulate network call
-    return _mockProducts;
+      if (response.statusCode == 200) {
+        return (jsonDecode(response.body) as List)
+            .map((json) => Product.fromJson(json))
+            .toList();
+      } else {
+        throw Exception('Failed to load products');
+      }
+    } catch (e) {
+      debugPrint('Public product fetch error: $e');
+      rethrow;
+    }
   }
 
-  Future<void> addProduct({
-    required String name,
-    required double price,
-    String? description,
-  }) async {
-    await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
-    // Just pretend we saved it - in a real app, this would call your backend
-    print('Mock product added: $name (\$$price)');
+  Future<List<Product>> fetchUserProducts(BuildContext context) async {
+    try {
+      final token = Provider.of<AuthProvider>(context, listen: false).token;
+      final response = await http.get(
+        Uri.parse('$_baseUrl/products?user_id=${Provider.of<AuthProvider>(context, listen: false).userData?.id}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return (jsonDecode(response.body) as List)
+            .map((json) => Product.fromJson(json))
+            .toList();
+      } else {
+        throw Exception('Failed to load user products');
+      }
+    } catch (e) {
+      debugPrint('User product fetch error: $e');
+      rethrow;
+    }
   }
 
-  Future<void> deleteProduct(String id) async {
-    await Future.delayed(_mockDelay);
-    _mockProducts.removeWhere((product) => product.id == id);
+  Future<Product> addProduct(Product product, BuildContext context) async {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
+    final response = await http.post(
+      Uri.parse('$_baseUrl/products'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json'
+      },
+      body: jsonEncode(product.toJson()),
+    );
+    if (response.statusCode == 201) {
+      return Product.fromJson(jsonDecode(response.body));
+    }
+    throw Exception('Failed to add product');
   }
 
-
+  Future<void> deleteProduct(String id, BuildContext context) async {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/products/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete product');
+    }
+  }
 }

@@ -1,47 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:myfrontend/features/auth/presentation/widget/default.dart';
-import 'package:myfrontend/features/auth/presentation/screens/login_screens.dart';
-import 'package:myfrontend/features/auth/presentation/screens/signup_screen.dart';
-import 'package:myfrontend/features/auth/presentation/widget/Buttons.dart';
+import 'package:myfrontend/features/auth/presentation/screens/auth_screen.dart';
 
 class DefaultScreen extends StatelessWidget {
-  const DefaultScreen({Key? key}) : super(key: key);
+  const DefaultScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    return DefaultBg(
-      child: Center(
-        child: Column(
-          children: [
-            SizedBox(height: screenHeight * 0.80),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Buttons(
-                  text: 'Sign in',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    );
-                  },
-                ),
-                SizedBox( width: screenWidth * 0.15),
-                Buttons(
-                  text: 'Sign Up',
-                  onPressed: () {
-                    Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => const SignupScreen()),
-                    );
-                  }
-                )
-              ],
-            ),
-          ],
+    return AlertDialog(
+      title: const Text('Login Required'),
+      content: const Text('You need to login to access your dashboard'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AuthScreen()),
+          ),
+          child: const Text('->'),
         ),
-      ),
+      ],
     );
   }
 }
