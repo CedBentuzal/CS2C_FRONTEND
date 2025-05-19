@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:myfrontend/data/model/user.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthProvider with ChangeNotifier {
   String? _token;
@@ -19,21 +20,18 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      await dotenv.load(); // Load environment variables
+      final baseUrl = dotenv.get('BASE_URL', fallback: 'http://10.0.2.2:3000');
+
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/api/login'),
+        Uri.parse('$baseUrl/api/login'), // Use configured base URL
         body: jsonEncode({'email': email, 'password': password}),
         headers: {'Content-Type': 'application/json'},
-      );
+      ).timeout(const Duration(seconds: 10));
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        _token = data['token'];
-        _userData = User.fromJson(data['user']);
-        notifyListeners();
-      } else {
-        throw AuthException(data['message'] ?? 'Login failed');
-      }
+      final data = _handleResponse(response);
+      _token = data['token'] as String;
+      _userData = User.fromJson(data['user'] as Map<String, dynamic>);
     } catch (e) {
       _clearAuthState();
       rethrow;
