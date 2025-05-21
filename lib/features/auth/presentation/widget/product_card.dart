@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:myfrontend/data/model/product.dart';
 import 'package:myfrontend/features/auth/provider/auth_provider.dart';
-import 'package:myfrontend/features/auth/services/product_service.dart';
-import 'package:myfrontend/features/auth/presentation/screens/add_product_screen.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -34,185 +32,197 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isOwner = context.read<AuthProvider>().userData?.id == product.userId;
 
     return GestureDetector(
       onTap: onTap,
-      child: SizedBox(
+      child: Container(
         width: width,
-        child: Card(
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Image with Category Badge
-              Stack(
-                children: [
-                  _buildProductImage(),
-                  if (showCategory && product.category != null)
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: _buildCategoryChip(theme),
-                    ),
-                ],
-              ),
-
-              // Product Details
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Product Name and Price
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            product.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '\$${product.price.toStringAsFixed(2)}',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Description (condensed)
-                    if (product.description?.isNotEmpty == true)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          product.description!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                          ),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image with Category Badge and Favorite Button
+            Stack(
+              children: [
+                // Fixed height image
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(18),
+                    topRight: Radius.circular(18),
+                  ),
+                  child: SizedBox(
+                    height: 120,
+                    width: double.infinity,
+                    child: Image.network(
+                      product.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: const Color(0xFFF5E9DA),
+                        child: const Center(
+                          child: Icon(Icons.broken_image, size: 48, color: Color(0xFF4A4A4A)),
                         ),
                       ),
+                    ),
+                  ),
+                ),
+                // Category Badge
+                if (showCategory && product.category != null)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.85),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        product.category!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF7B4F27),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                // Favorite Button
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Material(
+                    color: Colors.white.withOpacity(0.7),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      icon: const Icon(Icons.favorite_border),
+                      onPressed: () {
+                        // Add to favorites functionality
+                      },
+                      color: const Color(0xFF7B4F27),
+                      iconSize: 20,
+                      splashRadius: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Product Details
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Product Name
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF3E2723),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Price
+                    Text(
+                      '\$${product.price.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF7B4F27),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Description
+                    if (product.description != null)
+                      Text(
+                        product.description!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    if (showActions) ...[
+                      const SizedBox(height: 8),
+                      const Divider(height: 16),
+                      Row(
+                        children: [
+                          // Seller Avatar
+                          CircleAvatar(
+                            radius: 12,
+                            backgroundColor: const Color(0xFFE6D5C3),
+                            child: Text(
+                              product.userId.substring(0, 1).toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF4A4A4A),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Seller Name
+                          Expanded(
+                            child: Text(
+                              'Seller ID: ${product.userId.substring(0, 6)}...',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          // Edit/Delete buttons for owner
+                          if (isOwner) ...[
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 20),
+                              onPressed: () {
+                                // Edit product
+                              },
+                              color: const Color(0xFF4A4A4A),
+                              splashRadius: 18,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, size: 20),
+                              onPressed: () {
+                                // Delete product
+                              },
+                              color: Colors.red,
+                              splashRadius: 18,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
-
-              // Owner Actions
-              if (showActions && isOwner) _buildActionButtons(context),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildProductImage() {
-    return Hero(
-      tag: 'product-${product.id}',
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: Image.network(
-          product.imageUrl,
-          fit: BoxFit.cover,
-          loadingBuilder: (_, child, progress) =>
-          progress == null ? child : const Center(child: CircularProgressIndicator()),
-          errorBuilder: (_, __, ___) => Container(
-            color: Colors.grey[200],
-            child: const Center(child: Icon(Icons.broken_image)),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip(ThemeData theme) {
-    return Chip(
-      label: Text(
-        product.category!,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onPrimary,
-        ),
-      ),
-      backgroundColor: theme.colorScheme.primary,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          IconButton(
-            icon: Icon(Icons.edit, size: 20, color: Theme.of(context).colorScheme.primary),
-            onPressed: () => _editProduct(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-            onPressed: () => _confirmDelete(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _editProduct(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AddProductScreen(
-          product: product,
-          userId: context.read<AuthProvider>().userData!.id,
-        ),
-      ),
-    ).then((_) => onRefresh?.call());
-  }
-
-  void _confirmDelete(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Product?'),
-        content: const Text('This cannot be undone'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                await Provider.of<ProductService>(context, listen: false)
-                    .deleteProduct(product.id, context);
-                onRefresh?.call();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Product deleted')),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: ${e.toString()}')),
-                );
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
       ),
     );
   }

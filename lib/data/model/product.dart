@@ -1,4 +1,3 @@
-// model/product.dart
 class Product {
   final String id;
   final String name;
@@ -8,6 +7,11 @@ class Product {
   final String? description;
   final String userId;
   final DateTime createdAt;
+  final double? rating;
+  final List<String>? sizes;
+  final List<String>? colors;
+  final String? sellerUsername;  // Added
+  final String? demographic;     // <-- Added
 
   Product({
     required this.id,
@@ -18,13 +22,25 @@ class Product {
     this.description,
     required this.userId,
     DateTime? createdAt,
+    this.rating,
+    this.sizes,
+    this.colors,
+    this.sellerUsername,  // Added
+    this.demographic,     // <-- Added
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    final priceValue = json['price'];
+    double priceParsed;
+    if (priceValue == null || priceValue.toString().isEmpty) {
+      priceParsed = 0.0;
+    } else {
+      priceParsed = double.tryParse(priceValue.toString()) ?? 0.0;
+    }
     return Product(
-      id: json['id'].toString(), // Ensure string conversion
+      id: json['id'].toString(),
       name: json['name'].toString(),
-      price: double.parse(json['price'].toString()),
+      price: priceParsed,
       imageUrl: json['image_url'].toString(),
       category: json['category']?.toString() ?? 'Uncategorized',
       description: json['description']?.toString(),
@@ -32,6 +48,17 @@ class Product {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'].toString())
           : null,
+      rating: json['rating'] != null
+          ? double.tryParse(json['rating'].toString())
+          : null,
+      sizes: json['sizes'] != null
+          ? List<String>.from(json['sizes'])
+          : null,
+      colors: json['colors'] != null
+          ? List<String>.from(json['colors'])
+          : null,
+      sellerUsername: json['seller_username']?.toString(),  // Added
+      demographic: json['demographic']?.toString(),         // <-- Added
     );
   }
 
@@ -42,9 +69,13 @@ class Product {
     'category': category,
     'description': description,
     'user_id': userId,
+    'rating': rating,
+    'sizes': sizes,
+    'colors': colors,
+    'seller_username': sellerUsername,  // Added
+    'demographic': demographic,         // <-- Added
   };
 
-  // Helper getters
   String get formattedPrice => '\$${price.toStringAsFixed(2)}';
   String get shortDescription =>
       description != null && description!.length > 50

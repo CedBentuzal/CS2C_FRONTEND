@@ -2,224 +2,289 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:myfrontend/data/model/user.dart';
 import 'package:myfrontend/data/model/product.dart';
-import 'package:myfrontend/features/auth/presentation/screens/add_product_screen.dart';
-import 'package:myfrontend/features/auth/presentation/widget/product_card.dart';
-import 'package:myfrontend/features/auth/provider/auth_provider.dart';
+import 'package:myfrontend/features/auth/presentation/screens/my_product_screen.dart';
+import 'package:myfrontend/features/auth/services/recent_activity_service.dart';
 import 'package:myfrontend/features/auth/services/product_service.dart';
-import 'package:myfrontend/features/auth/presentation/screens/product_detail_screen.dart';
 
-class DashboardScreen extends StatefulWidget {
+Future<List<Product>> fetchRecentActivity(BuildContext context) async {
+  final ids = await RecentActivityService.getRecentProductIds();
+  if (ids.isEmpty) return [];
+  final allProducts = await Provider.of<ProductService>(context, listen: false).fetchPublicProducts();
+  final recentProducts = ids
+      .map((id) {
+    try {
+      return allProducts.firstWhere((p) => p.id == id);
+    } catch (e) {
+      return null;
+    }
+  })
+      .whereType<Product>()
+      .toList();
+  return recentProducts;
+}
+
+class DashboardScreen extends StatelessWidget {
   final User user;
   const DashboardScreen({super.key, required this.user});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
-  late Future<List<Product>> _latestProducts;
-  late Future<List<Product>> _userProducts;
-  late ProductService _productService;
-
-  @override
-  void initState() {
-    super.initState();
-    _productService = Provider.of<ProductService>(context, listen: false);
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    setState(() {
-      _latestProducts = _productService.fetchLatestProducts();
-      _userProducts = _productService.fetchUserProducts(context);
-    });
-  }
-
-  Future<List<Product>> _fetchLatestProducts() async {
-    return Provider.of<ProductService>(context, listen: false)
-        .fetchLatestProducts();
-  }
-
-  Future<List<Product>> _fetchUserProducts() async {
-    return Provider.of<ProductService>(context, listen: false)
-        .fetchUserProducts(context);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.user.username}\'s Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _logout(context),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadData,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildProfileCard()),
-            SliverToBoxAdapter(child: _buildLatestProductsSection()),
-            SliverToBoxAdapter(child: _buildMyListingsSection()),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToAddProduct(context),
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget _buildProfileCard() {
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
+      backgroundColor: const Color(0xFFF2F2F2),
+      body: SafeArea(
+        child: Column(
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundImage: NetworkImage(
-                widget.user.profilePic ?? 'assets/default_profile.png',
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // Header
+            Container(
+              color: const Color(0xFFA48C60),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Row(
                 children: [
-                  Text(widget.user.username, style: Theme.of(context).textTheme.titleLarge),
-                  Text(widget.user.email),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    onPressed: () => _editProfile(context),
-                    child: const Text("Edit Profile"),
+                  const CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.person, size: 40, color: Color(0xFFA48C60)),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      user.username,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.white),
+                    onPressed: () {
+                      // Edit profile logic
+                    },
                   ),
                 ],
               ),
             ),
+            // Store/Purchase Tabs
+            Container(
+              color: Colors.white,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MyProductScreen(userId: user.id),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.brown.shade300,
+                              width: 3,
+                            ),
+                          ),
+                        ),
+                        child: Column(
+                          children: const [
+                            Icon(Icons.store, color: Colors.brown),
+                            SizedBox(height: 4),
+                            Text('MyStore', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Column(
+                        children: const [
+                          Icon(Icons.shopping_bag, color: Colors.grey),
+                          SizedBox(height: 4),
+                          Text('Purchase', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Purchase Status Row
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: const [
+                  _DashboardIcon(icon: Icons.local_shipping, label: 'To receive'),
+                  _DashboardIcon(icon: Icons.local_mall, label: 'To Ship'),
+                  _DashboardIcon(icon: Icons.assignment_turned_in, label: 'Completed'),
+                  _DashboardIcon(icon: Icons.cancel, label: 'Cancelled'),
+                ],
+              ),
+            ),
+            // Activities
+            Container(
+              color: Colors.white,
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Column(
+                children: [
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: Text('Activities', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: const [
+                      _DashboardIcon(icon: Icons.mail, label: 'Message'),
+                      _DashboardIcon(icon: Icons.settings, label: 'Settings'),
+                      _DashboardIcon(icon: Icons.favorite_border, label: 'Favorites'),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: const [
+                      _DashboardIcon(icon: Icons.location_on, label: 'Location'),
+                      _DashboardIcon(icon: Icons.notifications, label: 'Notification'),
+                      _DashboardIcon(icon: Icons.receipt_long, label: 'Transaction'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Recent Store
+            Container(
+              color: Colors.white,
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('Recent Store', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 110,
+                    child: FutureBuilder<List<Product>>(
+                      future: fetchRecentActivity(context),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (snapshot.hasError) {
+                          return Center(child: Text('Error: ${snapshot.error}'));
+                        }
+                        final products = snapshot.data ?? [];
+                        if (products.isEmpty) {
+                          return const Center(child: Text('No Recent', style: TextStyle(color: Colors.grey, fontSize: 18)));
+                        }
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: products.length,
+                          itemBuilder: (context, index) {
+                            final product = products[index];
+                            return GestureDetector(
+                              onTap: () {
+                                // Optionally navigate to product detail
+                              },
+                              child: Container(
+                                width: 90,
+                                margin: const EdgeInsets.only(right: 12),
+                                child: Column(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                        product.imageUrl,
+                                        width: 80,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Container(
+                                          color: Colors.grey[200],
+                                          width: 80,
+                                          height: 60,
+                                          child: const Icon(Icons.broken_image, color: Colors.grey),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      product.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Other Store
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                width: double.infinity,
+                child: Column(
+                  children: [
+                    const Text('Other Store', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(3, (index) => Container(
+                        width: 70,
+                        height: 70,
+                        color: Colors.grey[200],
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                      )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildLatestProductsSection() {
+class _DashboardIcon extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _DashboardIcon({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text('New Arrivals', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        ),
-        SizedBox(
-          height: 220,
-          child: FutureBuilder<List<Product>>(
-            future: _latestProducts,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-              final products = snapshot.data ?? [];
-              return ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: products.length,
-                itemBuilder: (ctx, index) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ProductCard.small(
-                    product: products[index],
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ProductDetailScreen(product: products[index]),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+        Icon(icon, size: 28, color: Colors.brown),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12)),
       ],
-    );
-  }
-
-  Widget _buildMyListingsSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('My Listings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          FutureBuilder<List<Product>>(
-            future: _userProducts,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-              final products = snapshot.data ?? [];
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 0.75,
-                ),
-                itemCount: products.length,
-                itemBuilder: (context, index) => ProductCard(
-                  product: products[index],
-                  showActions: true,
-                  onRefresh: _loadData,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _navigateToAddProduct(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AddProductScreen(userId: widget.user.id),
-      ),
-    ).then((_) => _loadData());
-  }
-
-  void _logout(BuildContext context) {
-    Provider.of<AuthProvider>(context, listen: false).logout();
-    Navigator.popUntil(context, (route) => route.isFirst);
-  }
-
-  void _editProfile(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: const Text('Profile editing coming soon!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
     );
   }
 }

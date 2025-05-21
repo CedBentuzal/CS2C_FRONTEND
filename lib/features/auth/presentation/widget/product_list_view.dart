@@ -5,6 +5,7 @@ import 'package:myfrontend/features/auth/provider/auth_provider.dart';
 import 'package:myfrontend/features/auth/services/product_service.dart';
 import 'package:myfrontend/features/auth/presentation/widget/product_card.dart';
 import 'package:myfrontend/features/auth/presentation/screens/add_product_screen.dart';
+import 'package:myfrontend/features/auth/presentation/screens/product_detail_screen.dart'; // <-- Add this import
 
 class ProductListView extends StatefulWidget {
   const ProductListView({super.key});
@@ -25,7 +26,7 @@ class ProductListViewState extends State<ProductListView> {
 
   Future<void> loadProducts() async {
     setState(() {
-      _productsFuture = _service.fetchPublicProducts(); // Changed to fetchPublicProducts
+      _productsFuture = _service.fetchPublicProducts();
     });
   }
 
@@ -37,6 +38,15 @@ class ProductListViewState extends State<ProductListView> {
         builder: (context) => AddProductScreen(userId: userId),
       ),
     ).then((_) => loadProducts());
+  }
+
+  void _viewProduct(BuildContext context, Product product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProductDetailScreen(product: product),
+      ),
+    );
   }
 
   @override
@@ -84,6 +94,7 @@ class ProductListViewState extends State<ProductListView> {
             itemBuilder: (context, index) => ProductCard(
               product: products[index],
               onRefresh: loadProducts,
+              onTap: () => _viewProduct(context, products[index]), // <-- Add this line
             ),
           );
         },

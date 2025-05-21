@@ -7,15 +7,40 @@ class DefaultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Login Required'),
-      content: const Text('You need to login to access your dashboard'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: const [
+          Icon(Icons.lock_outline, color: Colors.deepPurple, size: 28),
+          SizedBox(width: 8),
+          Text(
+            'Login Required',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      content: const Text(
+        'You need to login to access this feature.\nPlease login to continue.',
+        style: TextStyle(fontSize: 16),
+      ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AuthScreen()),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.deepPurple,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          child: const Text('->'),
+          onPressed: () {
+            Navigator.of(context).pop(); // Close the dialog
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AuthScreen()),
+            );
+          },
+          icon: const Icon(Icons.login, size: 20),
+          label: const Text('Login Now'),
         ),
       ],
     );

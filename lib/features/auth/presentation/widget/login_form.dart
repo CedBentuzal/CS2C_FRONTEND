@@ -4,6 +4,7 @@ import 'package:myfrontend/features/auth/presentation/screens/signup_screen.dart
 import 'package:myfrontend/features/auth/presentation/widget/keyboard_avoiding_wrapper.dart';
 import 'package:provider/provider.dart';
 import 'package:myfrontend/features/auth/provider/auth_provider.dart';
+import 'package:myfrontend/features/auth/presentation/widget/navigation_bar.dart'; // <-- Import MainScaffold
 
 class LoginForm extends StatefulWidget {
   final double? minHeight;  // Optional minimum height
@@ -40,29 +41,29 @@ class _LoginFormState extends State<LoginForm> {
         }
 
         return Container(
-            constraints: BoxConstraints(
-              maxWidth: 500,
-              minHeight: widget.minHeight ?? constraints.minHeight * 0.6,
-              maxHeight: widget.maxHeight ?? constraints.maxHeight * 0.9,
+          constraints: BoxConstraints(
+            maxWidth: 500,
+            minHeight: widget.minHeight ?? constraints.minHeight * 0.6,
+            maxHeight: widget.maxHeight ?? constraints.maxHeight * 0.9,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.85),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(50),
+              topRight: Radius.circular(50),
             ),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.85),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(50),
-                topRight: Radius.circular(50),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 10,
+                spreadRadius: 2,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical:10),
-            child: KeyboardAvoidingWrapper(
-                minHeight: widget.minHeight ?? constraints.maxHeight * 0.5,
-                maxHeight: widget.maxHeight ?? constraints.maxHeight * 0.9,
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical:10),
+          child: KeyboardAvoidingWrapper(
+            minHeight: widget.minHeight ?? constraints.maxHeight * 0.5,
+            maxHeight: widget.maxHeight ?? constraints.maxHeight * 0.9,
             child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
               padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 20, top: 20,),
@@ -79,7 +80,7 @@ class _LoginFormState extends State<LoginForm> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFFA48C60),
+                        color: Color(0xFFA48C60),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -89,7 +90,7 @@ class _LoginFormState extends State<LoginForm> {
                         labelText: 'Email',
                         prefixIcon: const Icon(Icons.email),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20)),
+                            borderRadius: BorderRadius.circular(20)),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -148,9 +149,10 @@ class _LoginFormState extends State<LoginForm> {
                               _emailController.text.trim(),
                               _passwordController.text.trim(),
                             );
-                            Navigator.pushReplacement(
+                            Navigator.pushAndRemoveUntil(
                               context,
-                              MaterialPageRoute(builder: (context) => CatalogScreen()),
+                              MaterialPageRoute(builder: (_) => const MainScaffold(currentIndex: 0)),
+                                  (route) => false,
                             );
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -160,12 +162,12 @@ class _LoginFormState extends State<LoginForm> {
                         }
                       },
                       child: const Text(
-                          'Login',
-                      style: TextStyle(
+                        'Login',
+                        style: TextStyle(
                           fontSize : 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                      ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -177,10 +179,10 @@ class _LoginFormState extends State<LoginForm> {
                           onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => SignupScreen()));},
                           child: const Text('Sign Up',
                             style: TextStyle(
-                              color: const Color(0xFFA48C60),
+                              color: Color(0xFFA48C60),
                             ),
                           ),
-                          ),
+                        ),
                       ],
                     ),
                   ],

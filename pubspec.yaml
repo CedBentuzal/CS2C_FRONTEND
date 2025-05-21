@@ -18,6 +18,8 @@ dependencies:
   flutter_dotenv: ^5.1.0
   flutter_secure_storage: ^8.0.0
   provider: ^6.0.5
+  image_picker: ^1.0.4
+  path: ^1.8.3
 
   # Add your other dependencies here
 
